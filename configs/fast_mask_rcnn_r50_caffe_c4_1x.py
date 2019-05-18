@@ -1,4 +1,5 @@
 # model settings
+norm_cfg = dict(type='BN', requires_grad=False)
 model = dict(
     type='FastRCNN',
     pretrained='open-mmlab://resnet50_caffe',
@@ -10,7 +11,7 @@ model = dict(
         dilations=(1, 1, 1),
         out_indices=(2, ),
         frozen_stages=1,
-        normalize=dict(type='BN', requires_grad=False),
+        norm_cfg=norm_cfg,
         norm_eval=True,
         style='caffe'),
     shared_head=dict(
@@ -20,7 +21,7 @@ model = dict(
         stride=2,
         dilation=1,
         style='caffe',
-        normalize=dict(type='BN', requires_grad=False),
+        norm_cfg=norm_cfg,
         norm_eval=True),
     bbox_roi_extractor=dict(
         type='SingleRoIExtractor',
@@ -35,7 +36,14 @@ model = dict(
         num_classes=81,
         target_means=[0., 0., 0., 0.],
         target_stds=[0.1, 0.1, 0.2, 0.2],
-        reg_class_agnostic=False))
+        reg_class_agnostic=False),
+    mask_roi_extractor=None,
+    mask_head=dict(
+        type='FCNMaskHead',
+        num_convs=0,
+        in_channels=2048,
+        conv_out_channels=256,
+        num_classes=81))
 # model training and testing settings
 train_cfg = dict(
     rcnn=dict(
@@ -51,11 +59,15 @@ train_cfg = dict(
             pos_fraction=0.25,
             neg_pos_ub=-1,
             add_gt_as_proposals=True),
+        mask_size=14,
         pos_weight=-1,
         debug=False))
 test_cfg = dict(
     rcnn=dict(
-        score_thr=0.05, nms=dict(type='nms', iou_thr=0.5), max_per_img=100))
+        score_thr=0.05,
+        nms=dict(type='nms', iou_thr=0.5),
+        max_per_img=100,
+        mask_thr_binary=0.5))
 # dataset settings
 dataset_type = 'CocoDataset'
 data_root = 'data/coco/'
@@ -73,7 +85,7 @@ data = dict(
         size_divisor=32,
         proposal_file=data_root + 'proposals/rpn_r50_c4_1x_train2017.pkl',
         flip_ratio=0.5,
-        with_mask=False,
+        with_mask=True,
         with_crowd=True,
         with_label=True),
     val=dict(
@@ -82,10 +94,10 @@ data = dict(
         img_prefix=data_root + 'val2017/',
         img_scale=(1333, 800),
         img_norm_cfg=img_norm_cfg,
-        proposal_file=data_root + 'proposals/rpn_r50_c4_1x_val2017.pkl',
         size_divisor=32,
+        proposal_file=data_root + 'proposals/rpn_r50_c4_1x_val2017.pkl',
         flip_ratio=0,
-        with_mask=False,
+        with_mask=True,
         with_crowd=True,
         with_label=True),
     test=dict(
@@ -123,7 +135,7 @@ log_config = dict(
 total_epochs = 12
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/fast_rcnn_r50_c4_1x'
+work_dir = './work_dirs/fast_mask_rcnn_r50_caffe_c4_1x'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]

@@ -1,4 +1,5 @@
 # model settings
+norm_cfg = dict(type='BN', requires_grad=False)
 model = dict(
     type='CascadeRCNN',
     num_stages=3,
@@ -11,7 +12,7 @@ model = dict(
         dilations=(1, 1, 1),
         out_indices=(2, ),
         frozen_stages=1,
-        normalize=dict(type='BN', requires_grad=False),
+        norm_cfg=norm_cfg,
         norm_eval=True,
         style='caffe'),
     shared_head=dict(
@@ -21,7 +22,7 @@ model = dict(
         stride=2,
         dilation=1,
         style='caffe',
-        normalize=dict(type='BN', requires_grad=False),
+        norm_cfg=norm_cfg,
         norm_eval=True),
     rpn_head=dict(
         type='RPNHead',
@@ -66,14 +67,7 @@ model = dict(
             target_means=[0., 0., 0., 0.],
             target_stds=[0.033, 0.033, 0.067, 0.067],
             reg_class_agnostic=True)
-    ],
-    mask_roi_extractor=None,
-    mask_head=dict(
-        type='FCNMaskHead',
-        num_convs=0,
-        in_channels=2048,
-        conv_out_channels=256,
-        num_classes=81))
+    ])
 # model training and testing settings
 train_cfg = dict(
     rpn=dict(
@@ -93,6 +87,13 @@ train_cfg = dict(
         pos_weight=-1,
         smoothl1_beta=1 / 9.0,
         debug=False),
+    rpn_proposal=dict(
+        nms_across_levels=False,
+        nms_pre=12000,
+        nms_post=2000,
+        max_num=2000,
+        nms_thr=0.7,
+        min_bbox_size=0),
     rcnn=[
         dict(
             assigner=dict(
@@ -147,16 +148,13 @@ train_cfg = dict(
 test_cfg = dict(
     rpn=dict(
         nms_across_levels=False,
-        nms_pre=12000,
-        nms_post=2000,
-        max_num=2000,
+        nms_pre=6000,
+        nms_post=1000,
+        max_num=1000,
         nms_thr=0.7,
         min_bbox_size=0),
     rcnn=dict(
-        score_thr=0.05,
-        nms=dict(type='nms', iou_thr=0.5),
-        max_per_img=100,
-        mask_thr_binary=0.5),
+        score_thr=0.05, nms=dict(type='nms', iou_thr=0.5), max_per_img=100),
     keep_all_stages=False)
 # dataset settings
 dataset_type = 'CocoDataset'
@@ -222,7 +220,7 @@ log_config = dict(
 total_epochs = 12
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/cascade_mask_rcnn_r50_c4_1x'
+work_dir = './work_dirs/cascade_rcnn_r50_c4_1x'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]

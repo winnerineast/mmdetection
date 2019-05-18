@@ -10,7 +10,7 @@ model = dict(
         dilations=(1, 1, 1),
         out_indices=(2, ),
         frozen_stages=1,
-        normalize=dict(type='BN', requires_grad=False),
+        norm_cfg=dict(type='BN', requires_grad=False),
         norm_eval=True,
         style='caffe'),
     neck=None,
@@ -115,7 +115,7 @@ log_config = dict(
 total_epochs = 12
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/rpn_r50_c4_1x'
+work_dir = './work_dirs/rpn_r50_caffe_c4_1x'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]
